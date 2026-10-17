@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contáctanos</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="lead-form" id="app"><p class="muted">Cargando…</p></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/shared.js"></script>
+  <script>
+  'use strict';
+  (async () => {
+    const $app = document.getElementById('app');
+    let info;
+    try { info = await api('/api/public/form'); }
+    catch { $app.innerHTML = '<div class="card"><h2>Formulario no disponible</h2></div>'; return; }
+    document.title = info.formTitle + ' — ' + info.businessName;
+    $app.innerHTML = `<div class="card"><h1>${esc(info.formTitle)}</h1>${info.formIntro ? `<p class="muted">${esc(info.formIntro)}</p>` : ''}
+      <form id="f">
+        <div class="field"><label for="n">Nombre *</label><input id="n" name="name" required autocomplete="name"></div>
+        <div class="grid cols-2">
+          <div class="field"><label for="p">WhatsApp / teléfono</label><input id="p" name="phone" inputmode="tel" autocomplete="tel"></div>
+          <div class="field"><label for="e">Email</label><input id="e" name="email" type="email" autocomplete="email"></div></div>
+        <div class="field"><label for="co">Empresa (opcional)</label><input id="co" name="company" autocomplete="organization"></div>
+        <div class="field"><label for="i">¿Qué te interesa?</label><input id="i" name="interest" maxlength="120"></div>
+        <div class="field"><label for="m">Mensaje</label><textarea id="m" name="message" rows="3"></textarea></div>
+        <div class="hp" aria-hidden="true"><label>No llenar<input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <button class="btn primary" style="width:100%;justify-content:center">Enviar</button>
+        <p class="muted" style="font-size:.8rem;margin-bottom:0">Usaremos tus datos solo para responderte. Déjanos un teléfono o un email.</p>
+      </form></div>`;
+    document.getElementById('f').onsubmit = async e => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button'); btn.disabled = true;
+      try {
+        await api('/api/public/lead', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) });
+        $app.innerHTML = `<div class="card" style="text-align:center"><div style="font-size:2.5rem">✓</div><h2>${esc(info.formThanks)}</h2></div>`;
+      } catch (err) { toast(err.message); btn.disabled = false; }
+    };
+  })();
+  </script>
+</body>
+</html>
